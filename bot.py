@@ -5,11 +5,16 @@ import telebot
 import schedule
 import time
 import format_out
+import json
+import os
 
 bot = telebot.TeleBot(config.token)
 
 user_dict = {}
 
+#if os.path.isfile(config.users_dump):
+  #  with open(config.users_dump, 'r') as base:
+    #    users_dict = json.loads(base.read())
 
 subgroupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
 subgroupSelect.add('левая', 'правая')
@@ -24,12 +29,10 @@ class User:
     def __init__(self):
         self.group = None
         self.subgroup = None
-        self.user_group = None
         self.request_day = None
         self.request_week = None
         self.request_group = None
         self.request_subgroup = None
-        self.request_user_group = None
 @bot.message_handler(commands=['group'])
 def choice_group(message):
     msg = bot.reply_to(message, """
@@ -46,7 +49,7 @@ def add_group_step(message):
             bot.send_message(chat_id, 'Увы, я не знаю такой группы')
             return
             
-        user = User
+        user = User()
         user_dict[chat_id] = user 
         user.group = group
         msg = bot.reply_to(message, """Выбири свою подгруппу
@@ -64,16 +67,17 @@ def add_subgroup_step(message):
         sub = message.text
         user = user_dict[chat_id]
         if (sub == 'правая'):
-            user.subgroup = 1
-            #user.user_group=user.group+'-'+user.subgroup  #костыль, нужно убрать
+            user.subgroup = 1         
 
         elif (sub == 'левая'):
             user.subgroup = 0
-            #user.user_group=user.group+'-'+user.subgroup  #костыль, нужно убрать
         else:
             bot.reply_to(message, 'ops')
         bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ))
-    except:
+        #with open(config.users_dump, 'w') as base:
+          #  base.write(json.dumps(user_dict))
+    except BaseException  as i:
+        print(i)
         bot.reply_to(message, 'oooops')
 
 @bot.message_handler(commands=['mygroup'])
@@ -88,7 +92,7 @@ def mygroup(message):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    user = User
+    user = User()
     user_dict[message.chat.id] = user 
     msg = bot.reply_to(message,  'Привет! Я Расписание Мат-Меха! подробности по /help')
     #bot.register_next_step_handler(msg, choice_group)
@@ -243,7 +247,7 @@ def repeat_all_messages(message):
 def  update_request(chat_id):
     try:
         if not chat_id in user_dict.keys():
-            user = User
+            user = User()
             user_dict[chat_id] = user
 			
         user = user_dict[chat_id]
