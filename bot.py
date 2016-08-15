@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import config
+import token
 import telebot
 import schedule
 import time
 import format_out
-import token
-bot = telebot.TeleBot(token.token)
+
+bot = telebot.TeleBot(config.token)
 
 user_dict = {}
 
@@ -227,15 +228,16 @@ def schedule_week(message):
         bot.send_message(message.chat.id, format_out.out_week(schedule.week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
+   
             
         #send_help(message)
 	
 @bot.message_handler(commands=['schedule_next_week']) #group
 def schedule_next_week(message):
     try:            
-        with update_request(message.chat.id) as g:
-            user = user_dict[message.chat.id]
-            print(user.request_group, user.request_subgroup)
+        a = update_request(message.chat.id) 
+        user = user_dict[message.chat.id]
+        print(user.request_group, user.request_subgroup)
         bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
@@ -315,18 +317,14 @@ def update_request_subgroup(message):
         if (sub == 'правая'):
             user.request_subgroup = 1
             
-            
-
         elif (sub == 'левая'):
             user.request_subgroup = 0
-           
+         
         else:
             bot.reply_to(message, 'ops')
         
     except:
         bot.reply_to(message, 'update_request_subgroup')
-	
-	
 	
 if __name__ == '__main__':
     bot.polling(none_stop=True)
