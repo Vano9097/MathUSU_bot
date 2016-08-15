@@ -7,23 +7,11 @@ import time
 import format_out
 import json
 import os
+#import Serializing
 
 bot = telebot.TeleBot(config.token)
 
-user_dict = {}
 
-#if os.path.isfile(config.users_dump):
-  #  with open(config.users_dump, 'r') as base:
-    #    users_dict = json.loads(base.read())
-
-subgroupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
-subgroupSelect.add('левая', 'правая')
-
-groupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
-groupSelect.add('Моя', 'другая')
-
-daySelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора дня
-daySelect.add('понедельник' , 'вторник' ,'среда' ,'четверг' , 'пятница' ,'суббота')
 
 class User:
     def __init__(self):
@@ -33,6 +21,72 @@ class User:
         self.request_week = None
         self.request_group = None
         self.request_subgroup = None
+
+#############################
+
+class JSONUserEncoder(json.JSONEncoder):
+
+
+
+    def default(self, obj):
+        if isinstance(obj, User):
+            Dict={}
+            Dict['group'] = obj.group 
+            Dict['subgroup'] = obj.subgroup 
+            Dict['request_day'] = obj.request_day
+            Dict['request_week'] = obj.request_week
+            Dict['request_group'] = obj.request_group 
+            Dict['request_subgroup'] = obj.request_subgroup 
+
+            return dict(_User_object=Dict)
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+def json_as_python_User(dct):
+    """Decode json {'_set_object': [1,2,3]} to set([1,2,3])
+
+    Example
+    -------
+    decoded = json.loads(encoded, object_hook=json_as_python_set)
+
+    Also see :class:`JSONSetEncoder`
+
+    """
+    if '_User_object' in dct:
+        obj = User()
+        Dict = dct['_User_object']
+        obj.group = Dict['group'] 
+        obj.subgroup = Dict['subgroup']
+        obj.request_day = Dict['request_day']
+        obj.request_week = Dict['request_week']
+        obj.request_group  = Dict['request_group'] 
+        obj.request_subgroup = Dict['request_subgroup']
+        return obj
+    return dct
+
+####################
+
+
+
+if os.path.isfile(config.users_dump):
+    with open(config.users_dump, 'r') as base:
+        user_dict = json.loads(base.read(), object_hook=json_as_python_User) #####не работает
+    
+else:
+    user_dict = {}
+
+print(user_dict['12556174'].group)
+    
+subgroupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
+subgroupSelect.add('левая', 'правая')
+
+groupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
+groupSelect.add('Моя', 'другая')
+
+daySelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора дня
+daySelect.add('понедельник' , 'вторник' ,'среда' ,'четверг' , 'пятница' ,'суббота')
+
+
 @bot.message_handler(commands=['group'])
 def choice_group(message):
     msg = bot.reply_to(message, """
@@ -50,7 +104,7 @@ def add_group_step(message):
             return
             
         user = User()
-        user_dict[chat_id] = user 
+        user_dict[str(chat_id)] = user 
         user.group = group
         msg = bot.reply_to(message, """Выбири свою подгруппу
 левая или правая
@@ -65,7 +119,7 @@ def add_subgroup_step(message):
     try:
         chat_id = message.chat.id
         sub = message.text
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if (sub == 'правая'):
             user.subgroup = 1         
 
@@ -74,8 +128,10 @@ def add_subgroup_step(message):
         else:
             bot.reply_to(message, 'ops')
         bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ))
-        #with open(config.users_dump, 'w') as base:
+        with open(config.users_dump, 'w') as base:
           #  base.write(json.dumps(user_dict))
+            base.write(json.dumps(user_dict, cls=JSONUserEncoder))
+            print(user_dict)
     except BaseException  as i:
         print(i)
         bot.reply_to(message, 'oooops')
@@ -83,9 +139,11 @@ def add_subgroup_step(message):
 @bot.message_handler(commands=['mygroup'])
 def mygroup(message):
     try:
+        print(user_dict)
         chat_id = message.chat.id
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ) )
+        
     except:
         bot.reply_to(message, '''Увы я не знаю какая у тебя группа.
 Воспользуйся /group и сообщи мне свою группу''')
@@ -113,7 +171,7 @@ def schedule_day_group_request(message):
     try:
         chat_id = message.chat.id
         group = message.text.lower()
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if group == "моя":
             try:
                 user.request_group = user.group
@@ -134,7 +192,7 @@ def schedule_day_group_step(message):
     try:
         chat_id = message.chat.id
         group = message.text.lower() 
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if  group not in config.list_of_groups:
             bot.send_message(chat_id, 'Увы, я не знаю такой группы')
             return
@@ -153,7 +211,7 @@ def schedule_day_choice_subgroup(message):
     try:
         chat_id = message.chat.id
         sub = message.text
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if (sub == 'правая'):
             user.request_subgroup = 1
             bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day))) 
@@ -184,7 +242,7 @@ def  schedule_day_my_group_step(message):
     try:
         chat_id = message.chat.id
         day = message.text
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         user.request_day=day
         if chat_id in user_dict.keys():
             msg = bot.reply_to(message, "Про какую группу ты хочешь узнать?",reply_markup=groupSelect)
@@ -204,7 +262,7 @@ def  schedule_day_my_group_step(message):
 def schedule_now(message):
     try:
         chat_id = message.chat.id
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         user.request_group = user.group
         user.request_subgroup = user.subgroup
         bot.send_message(message.chat.id, format_out.out_day(schedule.day_schedule_now(user.request_group,user.request_subgroup)))
@@ -248,9 +306,9 @@ def  update_request(chat_id):
     try:
         if not chat_id in user_dict.keys():
             user = User()
-            user_dict[chat_id] = user
+            user_dict[str(chat_id)] = user
 			
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if chat_id in user_dict.keys():
             msg = bot.send_message(chat_id,"Про какую группу ты хочешь узнать?",reply_markup=groupSelect)
             bot.register_next_step_handler(msg, update_request_other_group)
@@ -270,7 +328,7 @@ def update_request_other_group(message):
     try:
         chat_id = message.chat.id
         group = message.text.lower()
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if group == "моя":
             try:
                 user.request_group = user.group
@@ -288,7 +346,7 @@ def update_request_group(message):
     try:
         chat_id = message.chat.id
         group = message.text.lower() 
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if  group not in config.list_of_groups:
             bot.send_message(chat_id, 'Увы, я не знаю такой группы')
             return
@@ -307,7 +365,7 @@ def update_request_subgroup(message):
     try:
         chat_id = message.chat.id
         sub = message.text
-        user = user_dict[chat_id]
+        user = user_dict[str(chat_id)]
         if (sub == 'правая'):
             user.request_subgroup = 1
             
