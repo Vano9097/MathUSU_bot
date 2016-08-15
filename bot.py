@@ -96,23 +96,12 @@ def send_welcome(message):
 def send_help(message):
     msg = bot.send_message(message.chat.id, """
 /start - приветствие
-/schedule [группа] - расписание группы на сегодня
-/schedule_day [группа] [день недели] - расписание группы на следующий [день недели]
-/schedule_week [группа] - расписание группы на текущую неделю
-/schedule_next_week [группа] - расписание на следующую неделю
+/schedule - расписание группы на сегодня
+/schedule_day - расписание группы на следующий [день недели]
+/schedule_week - расписание группы на текущую неделю
+/schedule_next_week - расписание на следующую неделю
 /help - помощь
 
-Примеры:
-
-/schedule_day мт-102-0 пн
-/schedule_day мт-102-1 вт
-
-
-где
-мт-102-0 - левая подгруппа, а
-мт-102-1 - правая подгруппа
-
-пн, вт ... - дни недели
 
 """)
 
@@ -235,7 +224,8 @@ def schedule_week(message):
 @bot.message_handler(commands=['schedule_next_week']) #group
 def schedule_next_week(message):
     try:            
-        a = update_request(message.chat.id) 
+        a = update_request(message.chat.id)
+        print(type(a),a)
         user = user_dict[message.chat.id]
         print(user.request_group, user.request_subgroup)
         bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
