@@ -1,5 +1,5 @@
 import json
-import collections
+
 
 class User:
     def __init__(self):
@@ -11,9 +11,6 @@ class User:
         self.request_subgroup = None
 
 class JSONUserEncoder(json.JSONEncoder):
-
-
-
     def default(self, obj):
         if isinstance(obj, User):
             Dict={}
@@ -29,15 +26,6 @@ class JSONUserEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 def json_as_python_User(dct):
-    """Decode json {'_set_object': [1,2,3]} to set([1,2,3])
-
-    Example
-    -------
-    decoded = json.loads(encoded, object_hook=json_as_python_set)
-
-    Also see :class:`JSONSetEncoder`
-
-    """
     if '_User_object' in dct:
         obj = User()
         Dict = dct['_User_object']
@@ -50,16 +38,3 @@ def json_as_python_User(dct):
         return obj
     return dct
 
-user=User()
-user.group = 'мт-101'
-user2=User()
-user2.group = 'мт-102'
-
-
-data = {'1' : user, '2': user2}
-print(data['1'])
-#data = user
-
-encoded = json.dumps(data, cls=JSONUserEncoder)
-decoded = json.loads(encoded, object_hook=json_as_python_User)
-print(decoded['1'].group)
