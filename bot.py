@@ -69,7 +69,6 @@ def add_subgroup_step(message):
             bot.reply_to(message, 'ops')
         bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ))
         with open(config.users_dump, 'w') as base:
-          #  base.write(json.dumps(user_dict))
             base.write(json.dumps(user_dict, cls=JSONUserEncoder))
             
     except BaseException  as i:
@@ -91,7 +90,9 @@ def mygroup(message):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user = User()
-    user_dict[str(message.chat.id)] = user 
+    user_dict[str(message.chat.id)] = user
+    with open(config.users_dump, 'w') as base:
+            base.write(json.dumps(user_dict, cls=JSONUserEncoder))
     msg = bot.reply_to(message,  'Привет! Я Расписание Мат-Меха! подробности по /help')
 @bot.message_handler(commands=['help'])
 def send_help(message):
@@ -108,96 +109,41 @@ def send_help(message):
 
 """)
 
-def schedule_day_group_request(message):
-    try:
-        chat_id = message.chat.id
-        group = message.text.lower()
-        user = user_dict[str(chat_id)]
-        if group == "моя":
-            try:
-                user.request_group = user.group
-                user.request_subgroup = user.subgroup
-                bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day))) 
-            except:
-                bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
-        elif group == "другая":
-            
-            msg = bot.reply_to(message, """Выбери группу""")
-            bot.register_next_step_handler(msg, schedule_day_group_step)
-        
-    except BaseException  as i:
-        print(i)
-        bot.reply_to(message, 'choice_group_request')
-
-def schedule_day_group_step(message):
-    try:
-        chat_id = message.chat.id
-        group = message.text.lower() 
-        user = user_dict[str(chat_id)]
-        if  group not in config.list_of_groups:
-            bot.send_message(chat_id, 'Увы, я не знаю такой группы')
-            return
-             
-        user.request_group = group
-        msg = bot.reply_to(message, """Выбери свою подгруппу
-левая или правая
-PS: если у вас нет разделения,
-то выберете левую
-                               """,reply_markup=subgroupSelect)
-        bot.register_next_step_handler(msg, schedule_day_choice_subgroup)
-    except:
-        bot.reply_to(message, 'oooops')
-		
-def schedule_day_choice_subgroup(message):
-    try:
-        chat_id = message.chat.id
-        sub = message.text
-        user = user_dict[str(chat_id)]
-        if (sub == 'правая'):
-            user.request_subgroup = 1
-            bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day))) 
-            #user.request_user_group=user.request_group+'-'+user.request_subgroup  #костыль, нужно убрать
-
-        elif (sub == 'левая'):
-            user.request_subgroup = 0
-            bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day))) 
-            #user.request_user_group=user.request_group+'-'+user.request_subgroup  #костыль, нужно убрать
-        else:
-            bot.reply_to(message, 'ops')
-    except:
-        bot.reply_to(message, 'schedule_day_choice_subgroup')
-
-    
 
 @bot.message_handler(commands=['schedule_day']) 
 def schedule_day(message):
     try:
         chat_id = message.chat.id
+        if not str(chat_id) in user_dict.keys():
+            user = User()
+            user_dict[str(chat_id)] = user
+            with open(config.users_dump, 'w') as base:
+                base.write(json.dumps(user_dict, cls=JSONUserEncoder))
         msg = bot.reply_to(message, "Какой день тебя интересует?",reply_markup=daySelect)
-        bot.register_next_step_handler(msg, schedule_day_my_group_step)
+        #bot.register_next_step_handler(msg, schedule_day_my_group_step)
+        bot.register_next_step_handler(msg, schedule_day_answer)
     except:
         bot.reply_to(message, 'schedule_day')
-
-
-def  schedule_day_my_group_step(message):
+        
+def schedule_day_answer(message):
     try:
         chat_id = message.chat.id
         day = message.text
         user = user_dict[str(chat_id)]
         user.request_day=day
-        if chat_id in user_dict.keys():
-            msg = bot.reply_to(message, "Про какую группу ты хочешь узнать?",reply_markup=groupSelect)
-            bot.register_next_step_handler(msg, schedule_day_group_request)
-        else:
-            msg = bot.reply_to(message, "Про какую группу ты хочешь узнать?")
-            bot.register_next_step_handler(msg, schedule_day_group_request)
-        
-        #time.sleep(100)
-        #print(6)
-        #bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_day)))
+        user.request = "False"
+        update_request(str(message.chat.id))
+        while user.request == "False" :
+            pass
+            print(user.request)
+        if user.request == "Fail":
+            raise BaseException
+        user.request = "False"
+        bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day))) 
     except BaseException  as i:
-        print(i)
-        bot.reply_to(message, 'schedule_day_my_group_step')
+        print(i, '##')
+        print("schedule_day_answer")
+        #bot.reply_to(message, 'schedule_day_my_group_step')
 
 @bot.message_handler(commands=['schedule']) 
 def schedule_now(message):
@@ -211,14 +157,17 @@ def schedule_now(message):
     except:
         bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
 	
-@bot.message_handler(commands=['schedule_week']) #group
+@bot.message_handler(commands=['schedule_week']) 
 def schedule_week(message):
-    try:            
+    try:
+        user.request = "False"
         update_request(str(message.chat.id))
         user = user_dict[str(message.chat.id)]
-        while not user.request :
+        while user.request == "False" :
             pass
-        user.request = False
+        if user.request == "Fail":
+            raise BaseException
+        user.request = "False"
         bot.send_message(message.chat.id, format_out.out_week(schedule.week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
@@ -226,14 +175,18 @@ def schedule_week(message):
             
         #send_help(message)
 	
-@bot.message_handler(commands=['schedule_next_week']) #group
+@bot.message_handler(commands=['schedule_next_week']) 
 def schedule_next_week(message):
-    try:            
+    try:
+        user.request = "False"
         update_request(str(message.chat.id))
         user = user_dict[str(message.chat.id)]
-        while not user.request :
+        while user.request == "False" :
             pass
-        user.request = False
+        if user.request == "Fail":
+            raise BaseException
+            
+        user.request = "False"
         bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
@@ -248,12 +201,12 @@ def repeat_all_messages(message):
 	
 def  update_request(chat_id):
     try:
-        if not chat_id in user_dict.keys():
+        if not str(chat_id) in user_dict.keys():
             user = User()
             user_dict[str(chat_id)] = user
 			
         user = user_dict[str(chat_id)]
-        if chat_id in user_dict.keys():
+        if str(chat_id) in user_dict.keys():
             msg = bot.send_message(chat_id,"Про какую группу ты хочешь узнать?",reply_markup=groupSelect)
             bot.register_next_step_handler(msg, update_request_other_group)
         else:
@@ -275,16 +228,24 @@ def update_request_other_group(message):
         user = user_dict[str(chat_id)]
         if group == "моя":
             try:
-                user.request_group = user.group
-                user.request_subgroup = user.subgroup
-                user.request = True
-            except:
+                if  user.group != None and user.subgroup !=None:
+                    user.request_group = user.group
+                    user.request_subgroup = user.subgroup
+                    user.request = "True"
+                else:
+                    raise BaseException
+                    #bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы') ###Exception
+            except BaseException  as i:
+                user.request = "Fail"
+                print(i, " update_request_other_group - моя")
+                
                 bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
         elif group == "другая":
             msg = bot.reply_to(message, 'Напишите группу про какую вы хотите узнать')
             bot.register_next_step_handler(msg, update_request_group)
     except BaseException  as i:
         print(i, 2)
+        user.request = "Fail"
         bot.reply_to(message, 'update_request_other_group')
 
 def update_request_group(message):
@@ -294,7 +255,7 @@ def update_request_group(message):
         user = user_dict[str(chat_id)]
         if  group not in config.list_of_groups:
             bot.send_message(chat_id, 'Увы, я не знаю такой группы')
-            return
+            raise BaseException
              
         user.request_group = group
         msg = bot.reply_to(message, """Выбери подгруппу
@@ -304,7 +265,8 @@ def update_request_group(message):
                                """,reply_markup=subgroupSelect)
         bot.register_next_step_handler(msg, update_request_subgroup)
     except:
-        bot.reply_to(message, 'oooops')
+        user.request = "Fail"
+        print(update_request_group)
 	
 def update_request_subgroup(message):
     try:
@@ -313,15 +275,16 @@ def update_request_subgroup(message):
         user = user_dict[str(chat_id)]
         if (sub == 'правая'):
             user.request_subgroup = 1
-            user.request = True
+            user.request = "True"
         elif (sub == 'левая'):
             user.request_subgroup = 0
-            user.request = True
+            user.request = "True"
         else:
             bot.reply_to(message, 'ops')
         
     except:
         bot.reply_to(message, 'update_request_subgroup')
+        user.request = "Fail"
 	
 if __name__ == '__main__':
     bot.polling(none_stop=True)
