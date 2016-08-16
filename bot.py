@@ -75,7 +75,6 @@ if os.path.isfile(config.users_dump):
 else:
     user_dict = {}
 
-print(user_dict['12556174'].group)
     
 subgroupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
 subgroupSelect.add('левая', 'правая')
@@ -131,7 +130,7 @@ def add_subgroup_step(message):
         with open(config.users_dump, 'w') as base:
           #  base.write(json.dumps(user_dict))
             base.write(json.dumps(user_dict, cls=JSONUserEncoder))
-            print(user_dict)
+            
     except BaseException  as i:
         print(i)
         bot.reply_to(message, 'oooops')
@@ -139,7 +138,7 @@ def add_subgroup_step(message):
 @bot.message_handler(commands=['mygroup'])
 def mygroup(message):
     try:
-        print(user_dict)
+        
         chat_id = message.chat.id
         user = user_dict[str(chat_id)]
         bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ) )
@@ -273,9 +272,9 @@ def schedule_now(message):
 @bot.message_handler(commands=['schedule_week']) #group
 def schedule_week(message):
     try:            
-        update_request(message.chat.id)
-        user = user_dict[message.chat.id]
-        print(user.request_group, user.request_subgroup)
+        update_request(str(message.chat.id))
+        user = user_dict[str(message.chat.id)]
+        #print(user.request_group, user.request_subgroup)
         bot.send_message(message.chat.id, format_out.out_week(schedule.week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
@@ -286,10 +285,10 @@ def schedule_week(message):
 @bot.message_handler(commands=['schedule_next_week']) #group
 def schedule_next_week(message):
     try:            
-        a = update_request(message.chat.id)
-        print(type(a),a)
-        user = user_dict[message.chat.id]
-        print(user.request_group, user.request_subgroup)
+        a = update_request(str(message.chat.id))
+        #print(type(a),a)
+        user = user_dict[str(message.chat.id)]
+        #print(user.request_group, user.request_subgroup)
         bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
