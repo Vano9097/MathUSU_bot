@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import config
-import token
 import telebot
 import schedule
 import time
@@ -123,7 +122,7 @@ def schedule_day_group_request(message):
                 bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
         elif group == "другая":
             
-            msg = bot.reply_to(message, """Выбири группу""")
+            msg = bot.reply_to(message, """Выбери группу""")
             bot.register_next_step_handler(msg, schedule_day_group_step)
         
     except BaseException  as i:
@@ -140,7 +139,7 @@ def schedule_day_group_step(message):
             return
              
         user.request_group = group
-        msg = bot.reply_to(message, """Выбири свою подгруппу
+        msg = bot.reply_to(message, """Выбери свою подгруппу
 левая или правая
 PS: если у вас нет разделения,
 то выберете левую
@@ -217,7 +216,9 @@ def schedule_week(message):
     try:            
         update_request(str(message.chat.id))
         user = user_dict[str(message.chat.id)]
-        #print(user.request_group, user.request_subgroup)
+        while not user.request :
+            pass
+        user.request = False
         bot.send_message(message.chat.id, format_out.out_week(schedule.week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
@@ -228,10 +229,11 @@ def schedule_week(message):
 @bot.message_handler(commands=['schedule_next_week']) #group
 def schedule_next_week(message):
     try:            
-        a = update_request(str(message.chat.id))
-        #print(type(a),a)
+        update_request(str(message.chat.id))
         user = user_dict[str(message.chat.id)]
-        #print(user.request_group, user.request_subgroup)
+        while not user.request :
+            pass
+        user.request = False
         bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
@@ -275,6 +277,7 @@ def update_request_other_group(message):
             try:
                 user.request_group = user.group
                 user.request_subgroup = user.subgroup
+                user.request = True
             except:
                 bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
         elif group == "другая":
@@ -310,10 +313,10 @@ def update_request_subgroup(message):
         user = user_dict[str(chat_id)]
         if (sub == 'правая'):
             user.request_subgroup = 1
-            
+            user.request = True
         elif (sub == 'левая'):
             user.request_subgroup = 0
-         
+            user.request = True
         else:
             bot.reply_to(message, 'ops')
         

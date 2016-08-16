@@ -5,6 +5,7 @@ class User:
     def __init__(self):
         self.group = None
         self.subgroup = None
+        self.request = False
         self.request_day = None
         self.request_week = None
         self.request_group = None
@@ -16,6 +17,7 @@ class JSONUserEncoder(json.JSONEncoder):
             Dict={}
             Dict['group'] = obj.group 
             Dict['subgroup'] = obj.subgroup 
+            Dict['request'] = obj.request
             Dict['request_day'] = obj.request_day
             Dict['request_week'] = obj.request_week
             Dict['request_group'] = obj.request_group 
@@ -31,6 +33,7 @@ def json_as_python_User(dct):
         Dict = dct['_User_object']
         obj.group = Dict['group'] 
         obj.subgroup = Dict['subgroup']
+        obj.request = Dict['request']
         obj.request_day = Dict['request_day']
         obj.request_week = Dict['request_week']
         obj.request_group  = Dict['request_group'] 
