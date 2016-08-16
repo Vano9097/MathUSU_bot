@@ -13,8 +13,7 @@ bot = telebot.TeleBot(config.token)
 
 if os.path.isfile(config.users_dump):
     with open(config.users_dump, 'r') as base:
-        user_dict = json.loads(base.read(), object_hook=json_as_python_User) #####не работает
-    
+        user_dict = json.loads(base.read(), object_hook=json_as_python_User)     
 else:
     user_dict = {}
 
@@ -93,13 +92,14 @@ def mygroup(message):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user = User()
-    user_dict[message.chat.id] = user 
+    user_dict[str(message.chat.id)] = user 
     msg = bot.reply_to(message,  'Привет! Я Расписание Мат-Меха! подробности по /help')
-    #bot.register_next_step_handler(msg, choice_group)
 @bot.message_handler(commands=['help'])
 def send_help(message):
     msg = bot.send_message(message.chat.id, """
 /start - приветствие
+/group - выбор своей группы
+/mygroup - твоя текущая группа
 /schedule - расписание группы на сегодня
 /schedule_day - расписание группы на следующий [день недели]
 /schedule_week - расписание группы на текущую неделю
