@@ -4,12 +4,12 @@ import json
 class User:
     def __init__(self):
         self.group = None
-        self.subgroup = None
-        self.request = False
+        self.subgroup = 0
+        self.request = "False"
         self.request_day = None
         self.request_week = None
         self.request_group = None
-        self.request_subgroup = None
+        self.request_subgroup = 0
 
 class JSONUserEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -32,12 +32,12 @@ def json_as_python_User(dct):
         obj = User()
         Dict = dct['_User_object']
         obj.group = Dict['group'] 
-        obj.subgroup = Dict['subgroup']
+        obj.subgroup = int(Dict['subgroup'])
         obj.request = Dict['request']
         obj.request_day = Dict['request_day']
         obj.request_week = Dict['request_week']
         obj.request_group  = Dict['request_group'] 
-        obj.request_subgroup = Dict['request_subgroup']
+        obj.request_subgroup = int(Dict['request_subgroup'])
         return obj
     return dct
 

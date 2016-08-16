@@ -9,10 +9,10 @@ rb = xlrd.open_workbook('schedule.xls',formatting_info=True)
 
 
 def week_schedule(group, subgroup):
-    return  [day_schedule_to_week(group, subgroup, day,int (time.strftime('%U',time.localtime())) % 2) for day in config.days.keys() ]
+    return  [day_schedule_to_week(group, subgroup, day,int (time.strftime('%U',time.localtime())) % 2) for day in config.list_of_days ]
 
 def next_week_schedule(group, subgroup):
-    return  [day_schedule_to_week(group, subgroup, day,  (int (time.strftime('%U',time.localtime())) + 1)  % 2   ) for day in config.days.keys() ]
+    return  [day_schedule_to_week(group, subgroup, day,  (int (time.strftime('%U',time.localtime())) + 1)  % 2   ) for day in config.list_of_days ]
 
 
     

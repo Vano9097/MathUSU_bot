@@ -120,7 +120,6 @@ def schedule_day(message):
             with open(config.users_dump, 'w') as base:
                 base.write(json.dumps(user_dict, cls=JSONUserEncoder))
         msg = bot.reply_to(message, "Какой день тебя интересует?",reply_markup=daySelect)
-        #bot.register_next_step_handler(msg, schedule_day_my_group_step)
         bot.register_next_step_handler(msg, schedule_day_answer)
     except:
         bot.reply_to(message, 'schedule_day')
@@ -135,7 +134,6 @@ def schedule_day_answer(message):
         update_request(str(message.chat.id))
         while user.request == "False" :
             pass
-            print(user.request)
         if user.request == "Fail":
             raise BaseException
         user.request = "False"
@@ -143,7 +141,6 @@ def schedule_day_answer(message):
     except BaseException  as i:
         print(i, '##')
         print("schedule_day_answer")
-        #bot.reply_to(message, 'schedule_day_my_group_step')
 
 @bot.message_handler(commands=['schedule']) 
 def schedule_now(message):
@@ -160,9 +157,15 @@ def schedule_now(message):
 @bot.message_handler(commands=['schedule_week']) 
 def schedule_week(message):
     try:
+        chat_id = message.chat.id
+        if not str(chat_id) in user_dict.keys():
+            user = User()
+            user_dict[str(chat_id)] = user
+            with open(config.users_dump, 'w') as base:
+                base.write(json.dumps(user_dict, cls=JSONUserEncoder))
+        user = user_dict[str(chat_id)]
         user.request = "False"
         update_request(str(message.chat.id))
-        user = user_dict[str(message.chat.id)]
         while user.request == "False" :
             pass
         if user.request == "Fail":
@@ -171,31 +174,32 @@ def schedule_week(message):
         bot.send_message(message.chat.id, format_out.out_week(schedule.week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
-   
-            
-        #send_help(message)
+
 	
 @bot.message_handler(commands=['schedule_next_week']) 
 def schedule_next_week(message):
     try:
+        chat_id = message.chat.id
+        if not str(chat_id) in user_dict.keys():
+            user = User()
+            user_dict[str(chat_id)] = user
+            with open(config.users_dump, 'w') as base:
+                base.write(json.dumps(user_dict, cls=JSONUserEncoder))
+        user = user_dict[str(message.chat.id)]
         user.request = "False"
         update_request(str(message.chat.id))
-        user = user_dict[str(message.chat.id)]
         while user.request == "False" :
             pass
         if user.request == "Fail":
             raise BaseException
-            
         user.request = "False"
         bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
         print(type(i))
-        #send_help(message)
 	
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message): 
-    #bot.send_message(message.chat.id, message.text)
 	pass
 
 	
@@ -212,10 +216,7 @@ def  update_request(chat_id):
         else:
             msg = bot. bot.send_message(chat_id, "Про какую группу ты хочешь узнать?")
             bot.register_next_step_handler(msg, update_request_other_group)
-        
-        #time.sleep(100)
-        #print(6)
-        #bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_day)))
+
     except BaseException  as i:
         print(i,1)
         bot.reply_to(message, 'schedule_day_my_group_step')
