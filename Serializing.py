@@ -1,5 +1,5 @@
 import json
-
+import collections
 
 class User:
     def __init__(self):
@@ -41,3 +41,16 @@ def json_as_python_User(dct):
         return obj
     return dct
 
+class JSONSetEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, collections.Set):
+            return dict(_set_object=list(obj))
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
+def json_as_python_set(dct):
+    if '_set_object' in dct:
+        return set(dct['_set_object'])
+    return dct
