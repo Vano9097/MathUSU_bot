@@ -154,7 +154,7 @@ def schedule_now(message):
     except:
         bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
 	
-@bot.message_handler(commands=['schedule_week']) 
+@bot.message_handler(commands=['schedule_week'])  ###Расписание на верхню неделю
 def schedule_week(message):
     try:
         chat_id = message.chat.id
@@ -171,12 +171,12 @@ def schedule_week(message):
         if user.request == "Fail":
             raise BaseException
         user.request = "False"
-        bot.send_message(message.chat.id, format_out.out_week(schedule.week_schedule(user.request_group, user.request_subgroup)))
+        bot.send_message(message.chat.id, format_out.out_week(schedule.up_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
 
 	
-@bot.message_handler(commands=['schedule_next_week']) 
+@bot.message_handler(commands=['schedule_next_week'])  ####Расписание на нижнюю неделю
 def schedule_next_week(message):
     try:
         chat_id = message.chat.id
@@ -193,7 +193,7 @@ def schedule_next_week(message):
         if user.request == "Fail":
             raise BaseException
         user.request = "False"
-        bot.send_message(message.chat.id, format_out.out_week(schedule.next_week_schedule(user.request_group, user.request_subgroup)))
+        bot.send_message(message.chat.id, format_out.out_week(schedule.down_week_schedule(user.request_group, user.request_subgroup)))
     except BaseException  as i:
         print(i)
         print(type(i))
