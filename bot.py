@@ -25,6 +25,7 @@ groupSelect.add('Моя', 'другая')
 
 daySelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора дня
 daySelect.add('понедельник' , 'вторник' ,'среда' ,'четверг' , 'пятница' ,'суббота')
+hideBoard = telebot.types.ReplyKeyboardHide()  # if sent as reply_markup, will hide the keyboar
 
 
 @bot.message_handler(commands=['group'])
@@ -67,7 +68,7 @@ def add_subgroup_step(message):
             user.subgroup = 0
         else:
             bot.reply_to(message, 'ops')
-        bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ))
+        bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\nИ подгруппу: ' +  ('левая' if user.subgroup == 0 else 'правая' ),reply_markup=hideBoard)
         with open(config.users_dump, 'w') as base:
             base.write(json.dumps(user_dict, cls=JSONUserEncoder))
             
@@ -81,7 +82,7 @@ def mygroup(message):
         
         chat_id = message.chat.id
         user = user_dict[str(chat_id)]
-        bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\n И подгруппу:' +  ('левая' if user.subgroup == 0 else 'правая' ) )
+        bot.send_message(chat_id, 'Я знаю твою группу : ' + user.group + '\nИ подгруппу :' +  ('левая' if user.subgroup == 0 else 'правая' ) ,reply_markup=hideBoard)
         
     except:
         bot.reply_to(message, '''Увы я не знаю какая у тебя группа.
@@ -97,13 +98,15 @@ def send_welcome(message):
 @bot.message_handler(commands=['help'])
 def send_help(message):
     msg = bot.send_message(message.chat.id, """
-/start - приветствие
+
+/free_rooms - узнать свободную аудиторию
 /group - выбор своей группы
 /mygroup - твоя текущая группа
 /schedule - расписание группы на сегодня
-/schedule_day - расписание группы на следующий [день недели]
+/schedule_day - расписание группы на выбранный день
 /schedule_week - расписание группы на текущую неделю
 /schedule_next_week - расписание на следующую неделю
+/start - приветствие
 /help - помощь
 
 
@@ -137,7 +140,7 @@ def schedule_day_answer(message):
         if user.request == "Fail":
             raise BaseException
         user.request = "False"
-        bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day))) 
+        bot.send_message(chat_id, format_out.out_day(schedule.day_schedule(user.request_group,user.request_subgroup,user.request_day)),reply_markup=hideBoard) 
     except BaseException  as i:
         print(i, '##')
         print("schedule_day_answer")
@@ -149,7 +152,7 @@ def schedule_now(message):
         user = user_dict[str(chat_id)]
         user.request_group = user.group
         user.request_subgroup = user.subgroup
-        bot.send_message(message.chat.id, format_out.out_day(schedule.day_schedule_now(user.request_group,user.request_subgroup)))
+        bot.send_message(message.chat.id, format_out.out_day(schedule.day_schedule_now(user.request_group,user.request_subgroup)),reply_markup=hideBoard)
          
     except:
         bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
@@ -171,7 +174,7 @@ def schedule_week(message):
         if user.request == "Fail":
             raise BaseException
         user.request = "False"
-        bot.send_message(message.chat.id, format_out.out_week(schedule.up_week_schedule(user.request_group, user.request_subgroup)))
+        bot.send_message(message.chat.id, format_out.out_week(schedule.up_week_schedule(user.request_group, user.request_subgroup)),reply_markup=hideBoard)
     except BaseException  as i:
         print(i)
 
@@ -193,15 +196,39 @@ def schedule_next_week(message):
         if user.request == "Fail":
             raise BaseException
         user.request = "False"
-        bot.send_message(message.chat.id, format_out.out_week(schedule.down_week_schedule(user.request_group, user.request_subgroup)))
+        bot.send_message(message.chat.id, format_out.out_week(schedule.down_week_schedule(user.request_group, user.request_subgroup)),reply_markup=hideBoard)
     except BaseException  as i:
         print(i)
         print(type(i))
 	
-@bot.message_handler(content_types=["text"])
-def repeat_all_messages(message): 
-	pass
 
+
+@bot.message_handler(commands=['free_rooms'])
+
+def free_rooms(message):
+    try:
+        chat_id = message.chat.id
+        if not str(chat_id) in user_dict.keys():
+            user = User()
+            user_dict[str(chat_id)] = user
+            with open(config.users_dump, 'w') as base:
+                base.write(json.dumps(user_dict, cls=JSONUserEncoder))
+        msg = bot.reply_to(message, "Какой день тебя интересует?",reply_markup=daySelect)
+        bot.register_next_step_handler(msg, free_rooms_answer)
+    except:
+        bot.reply_to(message, 'free_rooms')
+
+def free_rooms_answer(message):
+    try:
+        chat_id = message.chat.id
+        day = message.text
+        user = user_dict[str(chat_id)]
+        user.request_day=day
+        even_now = (int (time.strftime('%U',time.localtime())) % 2) ####проверить
+        bot.send_message(chat_id, format_out.out_free_rooms(schedule.free_room(user.request_day,even_now)), reply_markup=hideBoard) 
+    except BaseException  as i:
+        print(i, '##')
+        print("schedule_day_answer")
 	
 def  update_request(chat_id):
     try:
@@ -286,6 +313,10 @@ def update_request_subgroup(message):
     except:
         bot.reply_to(message, 'update_request_subgroup')
         user.request = "Fail"
+
+@bot.message_handler(content_types=["text"])
+def repeat_all_messages(message): 
+	pass
 	
 if __name__ == '__main__':
     bot.polling(none_stop=True)
