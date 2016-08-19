@@ -19,6 +19,14 @@ if os.path.isfile(config.users_dump):
 else:
     user_dict = {}
 
+def make_group_Keyboard(courses):
+    groupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    for group in sorted(config.list_of_courses[int(courses) - 1].keys()):
+        groupSelect.row(str(group)) ## .add(sorted(config.list_of_courses[courses].keys()))
+    return groupSelect
+    
+coursesSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора дня
+coursesSelect.add('1','2','3','4','5')
     
 subgroupSelect = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)  # клавиатура выбора подгруппы
 subgroupSelect.add('левая', 'правая')
@@ -34,11 +42,23 @@ hideBoard = telebot.types.ReplyKeyboardHide()  # if sent as reply_markup, will h
 @bot.message_handler(commands=['group'])
 def choice_group(message):
     msg = bot.reply_to(message, """
-                Выбери свою группу,
-                Пример: мт-102
-                """)
+                Выбери курс.
+                """,reply_markup=coursesSelect)
+    bot.register_next_step_handler(msg, add_course_step)
+def add_course_step(message):
+    courses = message.text.lower() 
+    msg = bot.reply_to(message, """
+                Выбери группу.
+                """,reply_markup=make_group_Keyboard(courses))
     bot.register_next_step_handler(msg, add_group_step)
 
+##def choice_group(message):
+##    msg = bot.reply_to(message, """
+##                Выбери свою группу,
+##                Пример: мт-102
+##                """)
+##    bot.register_next_step_handler(msg, add_group_step)
+##
 def add_group_step(message):
     try:
         chat_id = message.chat.id
@@ -107,8 +127,8 @@ def send_help(message):
 /mygroup - твоя текущая группа
 /schedule - расписание группы на сегодня
 /schedule_day - расписание группы на выбранный день
-/schedule_week - расписание группы на текущую неделю
-/schedule_next_week - расписание на следующую неделю
+/even_week - расписание группы на текущую неделю
+/uneven_week - расписание на следующую неделю
 /start - приветствие
 /help - помощь
 
@@ -160,7 +180,7 @@ def schedule_now(message):
     except:
         bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
 	
-@bot.message_handler(commands=['schedule_week'])  ###Расписание на верхню неделю
+@bot.message_handler(commands=['even_week'])  ###Расписание на верхню неделю
 def schedule_week(message):
     try:
         chat_id = message.chat.id
@@ -182,7 +202,7 @@ def schedule_week(message):
         print(i)
 
 	
-@bot.message_handler(commands=['schedule_next_week'])  ####Расписание на нижнюю неделю
+@bot.message_handler(commands=['uneven_week'])  ####Расписание на нижнюю неделю
 def schedule_next_week(message):
     try:
         chat_id = message.chat.id
@@ -252,6 +272,7 @@ def  update_request(chat_id):
         bot.reply_to(message, 'schedule_day_my_group_step')
 
 
+
 def update_request_other_group(message):
     try:
         chat_id = message.chat.id
@@ -272,12 +293,22 @@ def update_request_other_group(message):
                 
                 bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
         elif group == "другая":
-            msg = bot.reply_to(message, 'Напишите группу про какую вы хотите узнать')
-            bot.register_next_step_handler(msg, update_request_group)
+            msg = bot.reply_to(message, """
+                Выбери курс.
+                """,reply_markup=coursesSelect)
+            bot.register_next_step_handler(msg, update_request_course_step)
     except BaseException  as i:
         print(i, 2)
         user.request = "Fail"
         bot.reply_to(message, 'update_request_other_group')
+
+    
+def update_request_course_step(message):
+    courses = message.text.lower() 
+    msg = bot.reply_to(message, """
+                Выбери группу.
+                """,reply_markup=make_group_Keyboard(courses))
+    bot.register_next_step_handler(msg, update_request_group)
 
 def update_request_group(message):
     try:
