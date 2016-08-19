@@ -2,6 +2,9 @@
 import config
 import json
 import xlrd
+import format_out
+import Serializing
+
 def update_group_schedule():
         rez = dict()
         for group in config.list_of_groups:
@@ -19,15 +22,19 @@ def day_schedule_to_week(group,subgroup,day,even):
     page = int(group[3]) -1
     sheet = rb.sheet_by_index(page)
     group = config.groups_col[group] + subgroup
-    day=config.days[day]
     rez=[]
-    if day < 5:
+    shift = sum(map (lambda x : config.number_of_pairs[x]*2, config.list_of_days[:config.days[day]]))
+    for i in range(config.schedules_shift+shift + even ,config.schedules_shift+config.number_of_pairs[day]*2+shift ,2):
+        rez.append([sheet.cell_value(i,1)] + sheet.cell_value(i,group).split(','))
+    """if day < 5:
         for i in range(5+day*12 + even ,17+day*12 ,2):
             rez.append([sheet.cell_value(i,1)] + sheet.cell_value(i,group).split(','))
     else:
         for i in range(5+5*12 + even ,15+5*12 ,2):
             rez.append([sheet.cell_value(i,1)] + sheet.cell_value(i,group).split(','))
-    #rb.unload_sheet(page)
+    #rb.unload_sheet(page)"""
+        
+    
     return rez
         
 # rez [группа] [подгруппа] [верхняя = 0, нижняя = 1]
@@ -36,7 +43,21 @@ def day_schedule_to_week(group,subgroup,day,even):
 
 if __name__ == '__main__':
         rb = xlrd.open_workbook('schedule.xls',formatting_info=True)
-        update_group_schedule()
         with open(config.schedule_dump, 'w') as base:
             base.write(json.dumps(update_group_schedule()))
-
+        
+        rez = update_group_schedule()
+        set_of_rooms = set()
+        dict_of_rooms = dict()
+        for  group in config.list_of_groups:
+                for subgroup in [0,1]:
+                        for week in [0,1]:
+                                dict_of_rooms.setdefault(week,dict())
+                                for day in config.list_of_days:
+                                        dict_of_rooms[week].setdefault(day,dict())
+                                        for pair_n, pair in enumerate(rez[group][subgroup][week][day]):
+                                                dict_of_rooms[week][day].setdefault(pair_n,set())
+                                                set_of_rooms.update(set(format_out.room(pair)))
+                                                dict_of_rooms[week][day][pair_n].update(set(format_out.room(pair)))
+        with open(config.rooms_dump, 'w') as base:
+                base.write(json.dumps([set_of_rooms, dict_of_rooms], cls=Serializing.JSONSetEncoder))
