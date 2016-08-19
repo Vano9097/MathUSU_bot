@@ -7,6 +7,9 @@ import format_out
 import json
 import os
 from Serializing import *
+import read_xls
+
+config.list_of_groups, config.list_of_courses = read_xls.update_groups()
 
 bot = telebot.TeleBot(config.token)
 
