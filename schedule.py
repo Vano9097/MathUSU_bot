@@ -52,13 +52,11 @@ def day_schedule_now(group, subgroup):
     even= int (time.strftime('%U',time.localtime())) % 2      ##test
     return schedule_dict[group][subgroup][even][config.list_of_days[day]]
 
-
-def day_schedule_now(group, subgroup):
+def free_room_now(week,pair):
     day = int(time.strftime("%w", time.localtime())) - 1
     if day == -1: ##воскресенье 
         day = 0
-    even= int (time.strftime('%U',time.localtime())) % 2      ##test
-    return schedule_dict[group][subgroup][even][config.list_of_days[day]]
+    return set_of_rooms.difference(dict_of_rooms[str(week)][config.list_of_days[day]][str(pair)]) 
 
 def free_room(day,week):
     return [set_of_rooms.difference(dict_of_rooms[str(week)][day][str(pair_n)]) for pair_n in range(config.number_of_pairs[day])]

@@ -136,6 +136,7 @@ def send_welcome(message):
 def send_help(message):
     msg = bot.send_message(message.chat.id, """
 
+/free - свободные аудитории на ближайшей или текущей паре
 /free_rooms - узнать свободную аудиторию
 /group - выбор своей группы
 /pair - ближайшая или текущая пара
@@ -277,6 +278,19 @@ def pair_now():
             return index
     return index
 
+
+@bot.message_handler(commands=['free'])
+def free_rooms_now(message):
+    try:
+        chat_id = message.chat.id
+        user = user_dict[str(chat_id)]
+        even_now = (int (time.strftime('%U',time.localtime())) % 2) ####проверить
+        request_pair = pair_now()
+        bot.send_message(chat_id, format_out.out_free_rooms_now(schedule.free_room_now(even_now,request_pair),request_pair), reply_markup=hideBoard) 
+    except BaseException  as i:
+        bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
+        print(i, '##')
+        print("free_rooms_now")
 
 def free_rooms_answer(message):
     try:
