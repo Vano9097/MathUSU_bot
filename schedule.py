@@ -38,8 +38,25 @@ def day_schedule(group, subgroup, day):
         
     return schedule_dict[group][subgroup][even][day]
 
+def pair_schedule_now(group, subgroup,pair):
+    day = int(time.strftime("%w", time.localtime())) - 1
+    if day == -1: ##воскресенье 
+        day = 0
+    even= int (time.strftime('%U',time.localtime())) % 2      ##test
+    return schedule_dict[group][subgroup][even][config.list_of_days[day]][pair]
+
 def day_schedule_now(group, subgroup):
     day = int(time.strftime("%w", time.localtime())) - 1
+    if day == -1: ##воскресенье 
+        day = 0
+    even= int (time.strftime('%U',time.localtime())) % 2      ##test
+    return schedule_dict[group][subgroup][even][config.list_of_days[day]]
+
+
+def day_schedule_now(group, subgroup):
+    day = int(time.strftime("%w", time.localtime())) - 1
+    if day == -1: ##воскресенье 
+        day = 0
     even= int (time.strftime('%U',time.localtime())) % 2      ##test
     return schedule_dict[group][subgroup][even][config.list_of_days[day]]
 

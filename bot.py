@@ -8,6 +8,7 @@ import json
 import os
 from Serializing import *
 import read_xls
+from datetime import datetime, date
 
 config.list_of_groups, config.list_of_courses = read_xls.update_groups()
 
@@ -46,11 +47,24 @@ def choice_group(message):
                 """,reply_markup=coursesSelect)
     bot.register_next_step_handler(msg, add_course_step)
 def add_course_step(message):
-    courses = message.text.lower() 
-    msg = bot.reply_to(message, """
+
+
+    try:
+        chat_id = message.chat.id
+        user = user_dict[str(chat_id)]
+        courses = message.text.lower()
+        if  int(courses) < len(config.list_of_courses) + 1:
+            msg = bot.reply_to(message, """
                 Выбери группу.
                 """,reply_markup=make_group_Keyboard(courses))
-    bot.register_next_step_handler(msg, add_group_step)
+            bot.register_next_step_handler(msg, add_group_step)
+        else:
+            user.request = "Fail"
+            bot.reply_to(message, 'Я не знаю такого курса.')
+            
+    except ValueError:
+        user.request = "Fail"
+        bot.reply_to(message, 'Я не знаю такого курса.')
 
 ##def choice_group(message):
 ##    msg = bot.reply_to(message, """
@@ -168,6 +182,20 @@ def schedule_day_answer(message):
         print(i, '##')
         print("schedule_day_answer")
 
+@bot.message_handler(commands=['pair']) 
+def pair_now(message):
+    try:
+        chat_id = message.chat.id
+        user = user_dict[str(chat_id)]
+        user.request_group = user.group
+        user.request_subgroup = user.subgroup
+        request_pair = pair_now()
+        bot.send_message(message.chat.id, format_out.out_lesson(schedule.pair_schedule_now(user.request_group,user.request_subgroup, request_pair)),reply_markup=hideBoard)
+         
+    except:
+        bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
+
+
 @bot.message_handler(commands=['schedule']) 
 def schedule_now(message):
     try:
@@ -241,6 +269,14 @@ def free_rooms(message):
     except:
         bot.reply_to(message, 'free_rooms')
 
+def pair_now():
+    for index, pair in enumerate([rez.seconds for rez in [datetime.combine(datetime.now().date(), t) - datetime.now()
+                                                   for t in config.ends_of_pair]]):
+        if pair > 0 :
+            return index
+    return index
+
+
 def free_rooms_answer(message):
     try:
         chat_id = message.chat.id
@@ -304,11 +340,22 @@ def update_request_other_group(message):
 
     
 def update_request_course_step(message):
-    courses = message.text.lower() 
-    msg = bot.reply_to(message, """
+    try:
+        chat_id = message.chat.id
+        user = user_dict[str(chat_id)]
+        courses = message.text.lower()
+        if  int(courses) < len(config.list_of_courses) + 1:
+            msg = bot.reply_to(message, """
                 Выбери группу.
                 """,reply_markup=make_group_Keyboard(courses))
-    bot.register_next_step_handler(msg, update_request_group)
+            bot.register_next_step_handler(msg, update_request_group)
+        else:
+            user.request = "Fail"
+            bot.reply_to(message, 'Я не знаю такого курса.')
+            
+    except ValueError:
+        user.request = "Fail"
+        bot.reply_to(message, 'Я не знаю такого курса.')
 
 def update_request_group(message):
     try:
