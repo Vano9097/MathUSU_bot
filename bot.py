@@ -43,7 +43,7 @@ hideBoard = telebot.types.ReplyKeyboardHide()  # if sent as reply_markup, will h
 @bot.message_handler(commands=['group'])
 def choice_group(message):
     msg = bot.reply_to(message, """
-                Выбери курс.
+                выберите курс.
                 """,reply_markup=coursesSelect)
     bot.register_next_step_handler(msg, add_course_step)
 def add_course_step(message):
@@ -55,7 +55,7 @@ def add_course_step(message):
         courses = message.text.lower()
         if  int(courses) < len(config.list_of_courses) + 1:
             msg = bot.reply_to(message, """
-                Выбери группу.
+                выберите группу.
                 """,reply_markup=make_group_Keyboard(courses))
             bot.register_next_step_handler(msg, add_group_step)
         else:
@@ -68,7 +68,7 @@ def add_course_step(message):
 
 ##def choice_group(message):
 ##    msg = bot.reply_to(message, """
-##                Выбери свою группу,
+##                выберите свою группу,
 ##                Пример: мт-102
 ##                """)
 ##    bot.register_next_step_handler(msg, add_group_step)
@@ -191,7 +191,7 @@ def pair_now(message):
         user = user_dict[str(chat_id)]
         user.request_group = user.group
         user.request_subgroup = user.subgroup
-        request_pair = pair_now()
+        request_pair = Pair_now()
         bot.send_message(message.chat.id, format_out.out_lesson(schedule.pair_schedule_now(user.request_group,user.request_subgroup, request_pair)),reply_markup=hideBoard)
          
     except:
@@ -271,8 +271,8 @@ def free_rooms(message):
     except:
         bot.reply_to(message, 'free_rooms')
 
-def pair_now():
-    for index, pair in enumerate([rez.seconds for rez in [datetime.combine(datetime.now().date(), t) - datetime.now()
+def Pair_now():
+    for index, pair in enumerate([rez.total_seconds() for rez in [datetime.combine(datetime.now().date(), t) - datetime.now()
                                                    for t in config.ends_of_pair]]):
         if pair > 0 :
             return index
@@ -285,7 +285,7 @@ def free_rooms_now(message):
         chat_id = message.chat.id
         user = user_dict[str(chat_id)]
         even_now = (int (time.strftime('%U',time.localtime())) % 2) ####проверить
-        request_pair = pair_now()
+        request_pair = Pair_now()
         bot.send_message(chat_id, format_out.out_free_rooms_now(schedule.free_room_now(even_now,request_pair),request_pair), reply_markup=hideBoard) 
     except BaseException  as i:
         bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
@@ -345,7 +345,7 @@ def update_request_other_group(message):
                 bot.send_message(chat_id, 'Воспользуйтесь /group для сохранения своей группы')
         elif group == "другая":
             msg = bot.reply_to(message, """
-                Выбери курс.
+                выберите курс.
                 """,reply_markup=coursesSelect)
             bot.register_next_step_handler(msg, update_request_course_step)
     except BaseException  as i:
@@ -361,7 +361,7 @@ def update_request_course_step(message):
         courses = message.text.lower()
         if  int(courses) < len(config.list_of_courses) + 1:
             msg = bot.reply_to(message, """
-                Выбери группу.
+                выберите группу.
                 """,reply_markup=make_group_Keyboard(courses))
             bot.register_next_step_handler(msg, update_request_group)
         else:
@@ -382,7 +382,7 @@ def update_request_group(message):
             raise BaseException
              
         user.request_group = group
-        msg = bot.reply_to(message, """Выбери подгруппу
+        msg = bot.reply_to(message, """выберите подгруппу
 
  PS: если у вас нет разделения,
  то выберете левую
