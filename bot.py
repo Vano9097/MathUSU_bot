@@ -284,7 +284,8 @@ def free_rooms_now(message):
     try:
         chat_id = message.chat.id
         user = user_dict[str(chat_id)]
-        even_now = (int (time.strftime('%U',time.localtime())) % 2) ####проверить
+        
+        even_now = (int (time.strftime('%U',time.localtime()))+ 1)  % 2  ####проверить
         request_pair = Pair_now()
         bot.send_message(chat_id, format_out.out_free_rooms_now(schedule.free_room_now(even_now,request_pair),request_pair), reply_markup=hideBoard) 
     except BaseException  as i:
@@ -298,7 +299,7 @@ def free_rooms_answer(message):
         day = message.text
         user = user_dict[str(chat_id)]
         user.request_day=day
-        even_now = (int (time.strftime('%U',time.localtime())) % 2) ####проверить
+        even_now = (int (time.strftime('%U',time.localtime()))+ 1)  % 2  ####проверить
         bot.send_message(chat_id, format_out.out_free_rooms(schedule.free_room(user.request_day,even_now)), reply_markup=hideBoard) 
     except BaseException  as i:
         print(i, '##')

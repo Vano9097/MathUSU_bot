@@ -31,10 +31,11 @@ def down_week_schedule(group, subgroup):
 def day_schedule(group, subgroup, day):
     config.days[day]
     day_now = int(time.strftime("%w", time.localtime())) - 1
-    if  config.days[day] > day_now:                                                                              ##test
-        even = (int (time.strftime('%U',time.localtime())) % 2)
+    if  config.days[day] > day_now:            
+		even = (int (time.strftime('%U',time.localtime()))+ 1)  % 2                                                                  ##test
+        
     else:
-        even = (int (time.strftime('%U',time.localtime()))+ 1)  % 2
+        even = (int (time.strftime('%U',time.localtime())) % 2)
         
     return schedule_dict[group][subgroup][even][day]
 
@@ -44,7 +45,7 @@ def pair_schedule_now(group, subgroup,pair):
         day = int(time.strftime("%w", time.localtime())) - 1
         if day == -1: ##воскресенье 
             day = 0
-        even= int (time.strftime('%U',time.localtime())) % 2      ##test
+        even = (int (time.strftime('%U',time.localtime()))+ 1)  % 2      ##test
         return schedule_dict[group][subgroup][even][config.list_of_days[day]][pair]
     except IndexError:
         return schedule_dict[group][subgroup][even][config.list_of_days[day]][pair - 1]
@@ -53,7 +54,7 @@ def day_schedule_now(group, subgroup):
     day = int(time.strftime("%w", time.localtime())) - 1
     if day == -1: ##воскресенье 
         day = 0
-    even= int (time.strftime('%U',time.localtime())) % 2      ##test
+    even = (int (time.strftime('%U',time.localtime()))+ 1)  % 2    ##test
     return schedule_dict[group][subgroup][even][config.list_of_days[day]]
 
 def free_room_now(week,pair):
